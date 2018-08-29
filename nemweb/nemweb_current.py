@@ -36,7 +36,7 @@ class CurrentFileHandler:
       is "DISPATCH" and the 3rd is "SCADA_VALUE" and the name is "DISPATCH_UNIT_SCADA".
 
     Several datasets contain multiple tables. Examples can be found in the DATASETS dict
-    (nemweb_reader.DATASETS)"""
+    (nemfile_reader.DATASETS)"""
 
     def __init__(self):
         self.base_url = "http://www.nemweb.com.au"
