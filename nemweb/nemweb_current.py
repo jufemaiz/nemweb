@@ -1,16 +1,89 @@
 """Module for downloading data different 'CURRENT' nemweb dataset
 (selected data sets from files from http://www.nemweb.com.au/Reports/CURRENT)
 
-Module includes one main superclass for handling generic nemweb current files. A series of
-namedtuples (strored in global constant DATASETS) contains the relevant data for specfic datasets.
+Module includes one main superclass for handling generic nemweb current files. A
+series of namedtuples (strored in global constant DATASETS) contains the
+relevant data for specfic datasets.
+
 Datasets included from 'CURRENT' index page:
 
-- TradingIS_Reports
-- DispatchIS_Reports
-- Dispatch_SCADA
-- Next_Day_Dispatch (DISPATCH_UNIT_SOLUTION)
-- Next_Day_Actual_Gen (METER_DATA_GEN_DUID)
-- ROOFTOP_PV/ACTUAL
+- [Dispatch_SCADA](https://www.nemweb.com.au/REPORTS/CURRENT/Dispatch_SCADA/)
+- [DispatchIS_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/DispatchIS_Reports/)
+- [Next_Day_Actual_Gen](https://www.nemweb.com.au/REPORTS/CURRENT/Next_Day_Actual_Gen/) (METER_DATA_GEN_DUID)
+- [Next_Day_Dispatch](https://www.nemweb.com.au/REPORTS/CURRENT/Next_Day_Dispatch) (DISPATCH_UNIT_SOLUTION)
+- [ROOFTOP_PV/ACTUAL](https://www.nemweb.com.au/REPORTS/CURRENT/ROOFTOP_PV/ACTUAL/)
+- [TradingIS_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/TradingIS_Reports/)
+
+TODO:
+- [Adjusted_Prices_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Adjusted_Prices_Reports/)
+- [Alt_Limits](https://www.nemweb.com.au/REPORTS/CURRENT/Alt_Limits/)
+- [Ancillary_Services_Payments](https://www.nemweb.com.au/REPORTS/CURRENT/Ancillary_Services_Payments/)
+- [Auction_Units_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Auction_Units_Reports/)
+- [Bidmove_Complete](https://www.nemweb.com.au/REPORTS/CURRENT/Bidmove_Complete/)
+- [Bidmove_Summary](https://www.nemweb.com.au/REPORTS/CURRENT/Bidmove_Summary/)
+- [Billing](https://www.nemweb.com.au/REPORTS/CURRENT/Billing/)
+- [Causer_Pays](https://www.nemweb.com.au/REPORTS/CURRENT/Causer_Pays/)
+- [Causer_Pays_Rslcpf](https://www.nemweb.com.au/REPORTS/CURRENT/Causer_Pays_Rslcpf/)
+- [CDEII](https://www.nemweb.com.au/REPORTS/CURRENT/CDEII/)
+- [CSC_CSP_ConstraintList](https://www.nemweb.com.au/REPORTS/CURRENT/CSC_CSP_ConstraintList/)
+- [CSC_CSP_Settlements](https://www.nemweb.com.au/REPORTS/CURRENT/CSC_CSP_Settlements/)
+- [Daily_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Daily_Reports/)
+- [DAILYOCD](https://www.nemweb.com.au/REPORTS/CURRENT/DAILYOCD/)
+- [Directions_Reconciliation](https://www.nemweb.com.au/REPORTS/CURRENT/Directions_Reconciliation/)
+- [Dispatch_IRSR](https://www.nemweb.com.au/REPORTS/CURRENT/Dispatch_IRSR/)
+- [DISPATCH_NEGATIVE_RESIDUE](https://www.nemweb.com.au/REPORTS/CURRENT/DISPATCH_NEGATIVE_RESIDUE/)
+- [Dispatch_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Dispatch_Reports/)
+- [Dispatchprices_PRE_AP](https://www.nemweb.com.au/REPORTS/CURRENT/Dispatchprices_PRE_AP/)
+- [DWGM](https://www.nemweb.com.au/REPORTS/CURRENT/DWGM/)
+- [Gas_Supply_Guarantee](https://www.nemweb.com.au/REPORTS/CURRENT/Gas_Supply_Guarantee/)
+- [GSH](https://www.nemweb.com.au/REPORTS/CURRENT/GSH/)
+- [HighImpactOutages](https://www.nemweb.com.au/REPORTS/CURRENT/HighImpactOutages/)
+- [HistDemand](https://www.nemweb.com.au/REPORTS/CURRENT/HistDemand/)
+- [IBEI](https://www.nemweb.com.au/REPORTS/CURRENT/IBEI/)
+- [Marginal_Loss_Factors](https://www.nemweb.com.au/REPORTS/CURRENT/Marginal_Loss_Factors/)
+- [Market_Notice](https://www.nemweb.com.au/REPORTS/CURRENT/Market_Notice/)
+- [MCCDispatch](https://www.nemweb.com.au/REPORTS/CURRENT/MCCDispatch/)
+- [Medium_Term_PASA_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Medium_Term_PASA_Reports/)
+- [Mktsusp_Pricing](https://www.nemweb.com.au/REPORTS/CURRENT/Mktsusp_Pricing/)
+- [MTPASA_RegionAvailability](https://www.nemweb.com.au/REPORTS/CURRENT/MTPASA_RegionAvailability/)
+- [Network](https://www.nemweb.com.au/REPORTS/CURRENT/Network/)
+- [NEXT_DAY_MCCDISPATCH](https://www.nemweb.com.au/REPORTS/CURRENT/NEXT_DAY_MCCDISPATCH/)
+- [Next_Day_Offer_Energy](https://www.nemweb.com.au/REPORTS/CURRENT/Next_Day_Offer_Energy/)
+- [Next_Day_Offer_FCAS](https://www.nemweb.com.au/REPORTS/CURRENT/Next_Day_Offer_FCAS/)
+- [Next_Day_PreDispatch](https://www.nemweb.com.au/REPORTS/CURRENT/Next_Day_PreDispatch/)
+- [Next_Day_PreDispatchD](https://www.nemweb.com.au/REPORTS/CURRENT/Next_Day_PreDispatchD/)
+- [Next_Day_Trading](https://www.nemweb.com.au/REPORTS/CURRENT/Next_Day_Trading/)
+- [Operational_Demand](https://www.nemweb.com.au/REPORTS/CURRENT/Operational_Demand/)
+- [P5_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/P5_Reports/)
+- [PasaSnap](https://www.nemweb.com.au/REPORTS/CURRENT/PasaSnap/)
+- [PD7Day](https://www.nemweb.com.au/REPORTS/CURRENT/PD7Day/)
+- [PDPASA](https://www.nemweb.com.au/REPORTS/CURRENT/PDPASA/)
+- [Predispatch_IRSR](https://www.nemweb.com.au/REPORTS/CURRENT/Predispatch_IRSR/)
+- [Predispatch_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Predispatch_Reports/)
+- [Predispatch_Sensitivities](https://www.nemweb.com.au/REPORTS/CURRENT/Predispatch_Sensitivities/)
+- [PredispatchIS_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/PredispatchIS_Reports/)
+- [Public_Prices](https://www.nemweb.com.au/REPORTS/CURRENT/Public_Prices/)
+- [PublishedModelDataAccess](https://www.nemweb.com.au/REPORTS/CURRENT/PublishedModelDataAccess/)
+- [Regional_Summary_Report](https://www.nemweb.com.au/REPORTS/CURRENT/Regional_Summary_Report/)
+- [Reserve_Contract_Recovery](https://www.nemweb.com.au/REPORTS/CURRENT/Reserve_Contract_Recovery/)
+- [ROOFTOP_PV/FORECAST](https://www.nemweb.com.au/REPORTS/CURRENT/ROOFTOP_PV/FORECAST/)
+- [Settlements](https://www.nemweb.com.au/REPORTS/CURRENT/Settlements/)
+- [SEVENDAYOUTLOOK_FULL](https://www.nemweb.com.au/REPORTS/CURRENT/SEVENDAYOUTLOOK_FULL/)
+- [SEVENDAYOUTLOOK_PEAK](https://www.nemweb.com.au/REPORTS/CURRENT/SEVENDAYOUTLOOK_PEAK/)
+- [Short_Term_PASA_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Short_Term_PASA_Reports/)
+- [SRA_Bids](https://www.nemweb.com.au/REPORTS/CURRENT/SRA_Bids/)
+- [SRA_NSR_RECONCILIATION](https://www.nemweb.com.au/REPORTS/CURRENT/SRA_NSR_RECONCILIATION/)
+- [SRA_Results](https://www.nemweb.com.au/REPORTS/CURRENT/SRA_Results/)
+- [STTM](https://www.nemweb.com.au/REPORTS/CURRENT/STTM/)
+- [SupplyDemand](https://www.nemweb.com.au/REPORTS/CURRENT/SupplyDemand/)
+- [Trading_Cumulative_Price](https://www.nemweb.com.au/REPORTS/CURRENT/Trading_Cumulative_Price/)
+- [Trading_IRSR](https://www.nemweb.com.au/REPORTS/CURRENT/Trading_IRSR/)
+- [VicGas](https://www.nemweb.com.au/REPORTS/CURRENT/VicGas/)
+- [Vwa_Fcas_Prices](https://www.nemweb.com.au/REPORTS/CURRENT/Vwa_Fcas_Prices/)
+- [Weekly_Bulletin](https://www.nemweb.com.au/REPORTS/CURRENT/Weekly_Bulletin/)
+- [Weekly_Constraint_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Weekly_Constraint_Reports/)
+- [Yesterdays_Bids_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Yesterdays_Bids_Reports/)
+- [Yesterdays_MNSPBids_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Yesterdays_MNSPBids_Reports/)
 """
 
 from io import BytesIO
@@ -21,7 +94,8 @@ import requests
 from nemweb import nemfile_reader, nemweb_sqlite
 
 class CurrentFileHandler:
-    """class for handling 'CURRENT' nemweb files from http://www.nemweb.com.au
+    """Class for handling `CURRENT` nemweb files from http://www.nemweb.com.au
+
     Requires a 'CurrentDataset' namedtuple with following fields:
 
     - nemweb_name: the name of the dataset to be download (e.g. Dispatch_SCADA)
@@ -36,18 +110,33 @@ class CurrentFileHandler:
       is "DISPATCH" and the 3rd is "SCADA_VALUE" and the name is "DISPATCH_UNIT_SCADA".
 
     Several datasets contain multiple tables. Examples can be found in the DATASETS dict
-    (nemfile_reader.DATASETS)"""
+    (nemfile_reader.DATASETS)
+
+    Attributes:
+        base_url (str): the base URL used in HTTP requests, allows for mocking overrides
+        path (str): the path to access the datasets
+    """
 
     def __init__(self):
-        self.base_url = "http://www.nemweb.com.au"
-        self.section = "Reports/CURRENT"
+        self.base_url = "https://www.nemweb.com.au"
+        self.path = "REPORTS/CURRENT"
 
     def update_data(self, dataset, print_progress=False):
         """Main method to process nemweb dataset
+
         - downloads the index page for the dataset
         - determines date to start downloading from
         - matches the start date against files in the index
-        - inserts new files into database"""
+        - inserts new files into database
+
+        Args:
+            dataset (???): some sort of dataset
+            print_progress (bool, optional): weather or not to provide verbose
+                output. Defaults to False.
+
+        Returns:
+            None
+        """
         start_date = nemweb_sqlite.start_from(dataset.tables[0],
                                               timestamp_col=dataset.datetime_column)
         page = requests.get("{0}/{1}/{2}/".format(self.base_url,
@@ -69,14 +158,21 @@ class CurrentFileHandler:
 
     def download(self, link):
         """Dowloads nemweb zipfile from link into memory as a byteIO object.
-        nemfile object is returned from the byteIO object """
+        nemfile object is returned from the byteIO object
+
+        Args:
+            link (str): the URL to request
+
+        Returns:
+            dict
+        """
         response = requests.get("{0}{1}".format(self.base_url, link))
         zip_bytes = BytesIO(response.content)
         nemfile = nemfile_reader.nemzip_reader(zip_bytes)
         return nemfile
 
 
-#class factory function for containing data for 'Current' datasets
+# Class factory function for containing data for 'CURRENT' datasets
 CurrentDataset = namedtuple("NemwebCurrentFile",
                             ["dataset_name",
                              "nemfile_pattern",
@@ -92,7 +188,7 @@ DATASETS = {
         datetime_column="SETTLEMENTDATE",
         tables=["DISPATCH_UNIT_SCADA"]),
 
-    "trading_is":    CurrentDataset(
+    "trading_is": CurrentDataset(
         dataset_name="TradingIS_Reports",
         nemfile_pattern="PUBLIC_TRADINGIS_([0-9]{12})_[0-9]{16}.zip",
         datetime_format="%Y%m%d%H%M",
@@ -133,7 +229,17 @@ DATASETS = {
 }
 
 def update_datasets(datasets, print_progress=False):
-    """function that updates a subset of datasets (as a list) contained in DATASETS"""
+    """Updates a subset of datasets (as a list) contained in DATASETS
+
+    Args:
+        datasets (list): list of datasets to update
+        print_progress (bool, optional): whether or not to print the log
+            progress. Defaults to False
+
+    Returns:
+        None
+    """
     filehandler = CurrentFileHandler()
     for dataset_name in datasets:
-        filehandler.update_data(DATASETS[dataset_name], print_progress=print_progress)
+        filehandler.update_data(DATASETS[dataset_name],
+                                print_progress=print_progress)
