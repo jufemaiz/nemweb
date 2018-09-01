@@ -130,9 +130,9 @@ class CurrentFileHandler:
         - inserts new files into database
 
         Args:
-            dataset (???): some sort of dataset
-            print_progress (bool, optional): weather or not to provide verbose
-                output. Defaults to False.
+            dataset (:obj:`CurrentDataset`): the CurrentDataset to use
+            print_progress (bool, optional): debug mode printing process of the
+                update_data calls. Defaults to False.
 
         Returns:
             None
