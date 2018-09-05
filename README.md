@@ -80,11 +80,12 @@ from nemweb import nemweb_current
 
 nemweb_current.update_datasets([dispatch_scada],
                                print_progress=True)
-'Dispatch_SCADA 2018-06-24 13:40:00'
-'Dispatch_SCADA 2018-06-24 13:45:00'
-'Dispatch_SCADA 2018-06-24 13:50:00'
-'Dispatch_SCADA 2018-06-24 13:55:00'
-'...'
+
+> 'Dispatch_SCADA 2018-06-24 13:40:00'
+> 'Dispatch_SCADA 2018-06-24 13:45:00'
+> 'Dispatch_SCADA 2018-06-24 13:50:00'
+> 'Dispatch_SCADA 2018-06-24 13:55:00'
+> '...'
 ```
 
 Currently, the following dataset are built in to the package, and can be added
