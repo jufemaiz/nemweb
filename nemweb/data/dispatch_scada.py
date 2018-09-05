@@ -86,6 +86,6 @@ def nemserializer(datum, lineend=True):
         str CSV form of a row, including line ending
     """
     return "D,DISPATCH,UNIT_SCADA,1,{0},{1},{2}{3}".format(datum.fallingedge.strftime(SETTLEMENTDATEFORMAT),
-                                                        datum.duid,
-                                                        datum.value,
-                                                        ("\n" if lineend else ''))
+                                                           datum.duid,
+                                                           datum.value,
+                                                           ("\n" if lineend else ''))
