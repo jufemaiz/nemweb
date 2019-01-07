@@ -106,6 +106,8 @@ containing data for 'Current' datasets (`CurrentDataset`) found in the
 
 ## Documentation
 
+![Build Status](https://readthedocs.org/projects/nemweb/badge/?version=latest)
+
 Further information available with
 [the online documentation at ReadTheDocs](https://nemweb.readthedocs.io/en/latest/nemweb.html).
 

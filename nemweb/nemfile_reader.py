@@ -1,8 +1,9 @@
-"""Module for reading nemfiles and zipped nemfiles into pandas dataframes"""
+""" reading nemfiles and zipped nemfiles into pandas dataframes """
 
 from io import BytesIO
 from zipfile import ZipFile
 import pandas as pd
+
 
 class ZipFileStreamer(ZipFile):
     """ZipFileStreamer is a ZipFile subclass, with method to extract ZipFile as
@@ -48,6 +49,7 @@ def zip_streams(file_object):
         for filename in zipfile.namelist():
             yield filename, zipfile.extract_stream(filename)
 
+
 def nemfile_reader(nemfile_object):
     """Transforms the data in the nemfile_object into an appropriate data
     structure - in this case a dict containing a pandas dataframe each table in
@@ -75,7 +77,9 @@ def nemfile_reader(nemfile_object):
         elif columns[0] == "D":
             table_dict[table] += line
 
-    return {table:pd.read_csv(BytesIO(table_dict[table])) for table in table_dict}
+    return {table: pd.read_csv(BytesIO(table_dict[table]))
+            for table in table_dict}
+
 
 def nemzip_reader(nemzip_object):
     """The nemzip_object must be a zipped csv (nemzip), and can be either a file
