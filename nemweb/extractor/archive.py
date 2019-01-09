@@ -17,68 +17,67 @@ is processed.
 ArchiveData gets the ARCHIVE datasets as they are divergent from the ARCHIVE in
 files stored and naming structures.
 """
+
 import datetime
-import re
+from collections import namedtuple
+from io import BytesIO
 import requests
 
-from collections import namedtuple
-from dateutil import parser
-from io import BytesIO
-
-from nemweb.extractor import data
 from nemweb import nemfile_reader
+from nemweb import timezone as tz
+from nemweb.extractor import data
 
 Dataset = namedtuple('NemwebArchive',
                      ['title', 'path', 'filepattern', 'datetimeformat',
                       'datetimekey', 'stepsize'])
 
 DATASETS = {
-    "dispatch_scada": Dataset(
-        title="Dispatch SCADA",
-        path="Dispatch_SCADA",
-        filepattern='PUBLIC_DISPATCHSCADA_(\d{12})_\d{16}.zip',
-        datetimeformat="%Y%m%d%H%M",
-        datetimekey="SETTLEMENTDATE",
+    'dispatch_scada': Dataset(
+        title='Dispatch SCADA',
+        path='Dispatch_SCADA',
+        filepattern=r'PUBLIC_DISPATCHSCADA_(\d{12})_\d{16}.zip',
+        datetimeformat='%Y%m%d%H%M',
+        datetimekey='SETTLEMENTDATE',
         stepsize=300),
 
-    "trading_is": Dataset(
-        title="Trading Internodal Settlement Reports",
-        path="TradingIS_Reports",
-        filepattern="PUBLIC_TRADINGIS_(\d{12})_\d{16}.zip",
-        datetimeformat="%Y%m%d%H%M",
-        datetimekey="SETTLEMENTDATE",
+    'trading_is': Dataset(
+        title='Trading Internodal Settlement Reports',
+        path='TradingIS_Reports',
+        filepattern=r'PUBLIC_TRADINGIS_(\d{12})_\d{16}.zip',
+        datetimeformat='%Y%m%d%H%M',
+        datetimekey='SETTLEMENTDATE',
         stepsize=300),
 
-    "rooftopPV_actual": Dataset(
-        title="Rooftop Photovoltaics Actual",
-        path="ROOFTOP_PV/ACTUAL",
-        filepattern="PUBLIC_ROOFTOP_PV_ACTUAL_(\d{14})_\d{16}.zip",
-        datetimeformat="%Y%m%d%H%M00",
-        datetimekey="INTERVAL_DATETIME",
+    'rooftopPV_actual': Dataset(
+        title='Rooftop Photovoltaics Actual',
+        path='ROOFTOP_PV/ACTUAL',
+        filepattern=r'PUBLIC_ROOFTOP_PV_ACTUAL_(\d{14})_\d{16}.zip',
+        datetimeformat='%Y%m%d%H%M00',
+        datetimekey='INTERVAL_DATETIME',
         stepsize=300),
 
-    "next_day_actual_gen": Dataset(
-        title="Next Day Actual Generation",
-        path="Next_Day_Actual_Gen",
-        filepattern="PUBLIC_NEXT_DAY_ACTUAL_GEN_(\d{8})_\d{16}.zip",
-        datetimeformat="%Y%m%d",
-        datetimekey="INTERVAL_DATETIME",
+    'next_day_actual_gen': Dataset(
+        title='Next Day Actual Generation',
+        path='Next_Day_Actual_Gen',
+        filepattern=r'PUBLIC_NEXT_DAY_ACTUAL_GEN_(\d{8})_\d{16}.zip',
+        datetimeformat='%Y%m%d',
+        datetimekey='INTERVAL_DATETIME',
         stepsize=300),
 
-    "dispatch_is": Dataset(
-        title="Dispatch Internodal Settlement Reports",
-        path="DispatchIS_Reports",
-        filepattern="PUBLIC_DISPATCHIS_(\d{12})_\d{16}.zip",
-        datetimeformat="%Y%m%d%H%M",
-        datetimekey="SETTLEMENTDATE",
+    'dispatch_is': Dataset(
+        title='Dispatch Internodal Settlement Reports',
+        path='DispatchIS_Reports',
+        filepattern=r'PUBLIC_DISPATCHIS_(\d{12})_\d{16}.zip',
+        datetimeformat='%Y%m%d%H%M',
+        datetimekey='SETTLEMENTDATE',
         stepsize=300),
 
-    "next_day_dispatch": Dataset(
-        title="Next Day Dispatch",
-        path="Next_Day_Dispatch",
-        filepattern="PUBLIC_NEXT_DAY_DISPATCH_(\d{8})_\d{16}.zip",
-        datetimeformat="%Y%m%d",
-        datetimekey="SETTLEMENTDATE",
+    'next_day_dispatch': Dataset(
+        title='Next Day Dispatch',
+        path='Next_Day_Dispatch',
+        filepattern=r'PUBLIC_NEXT_DAY_DISPATCH_(\d{8})_\d{16}.zip',
+        datetimeformat='%Y%m%d',
+        datetimekey='SETTLEMENTDATE',
         stepsize=300)
 }
 
@@ -97,17 +96,6 @@ class ArchiveData(data.Data):
     basepath = 'REPORTS/ARCHIVE'
     """basepath for current data"""
 
-    def __init__(self, dataset):
-        """
-        Args:
-            dataset (:obj:`Dataset`):
-        """
-        self.title = dataset.title
-        self.path = dataset.path
-        self.filepattern = dataset.filepattern
-        self.datetimeformat = dataset.datetimeformat
-        self.datetimekey = dataset.datetimekey
-
     def dataset(self, start=None, finish=None):
         """
         Args:
@@ -119,19 +107,13 @@ class ArchiveData(data.Data):
         Returns:
             array dict
         """
-        now = datetime.datetime.utcnow().astimezone(AEMOTZ)
-        if start == None:
-            start = datetime.datetime(now.year,
-                                      now.month,
-                                      now.day,
-                                      tzinfo=AEMOTZ)
-        if finish == None:
-            finish = start + datetime.timedelta(days=1)
+        start, finish = self.set_start_finish(start, finish)
+
         datasets = []
 
         for link in self._links():
             filedatetime = datetime.datetime.strptime(link['datetime'],
-                                                      self.datetimeformat).replace(tzinfo=AEMOTZ)
+                                                      self.datetimeformat).replace(tzinfo=tz.AEMOTZ)
 
             if filedatetime < start or filedatetime > finish:
                 continue
@@ -155,13 +137,3 @@ class ArchiveData(data.Data):
         zip_bytes = BytesIO(response.content)
         nemfile = nemfile_reader.nemzip_reader(zip_bytes)
         return nemfile
-
-    def _links(self):
-        page = requests.get("{0}/{1}/{2}/".format(self.__class__.baseurl,
-                                                  self.__class__.basepath,
-                                                  self.path))
-        regex = re.compile("/{0}/{1}/{2}".format(self.__class__.basepath,
-                                                 self.path,
-                                                 self.filepattern))
-        for link in regex.finditer(page.text):
-            yield {'path':link.group(0),'datetime':link.group(1)}

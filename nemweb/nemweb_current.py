@@ -1,3 +1,4 @@
+#pylint: disable=line-too-long
 """Module for downloading data different 'CURRENT' nemweb dataset
 (selected data sets from files from http://www.nemweb.com.au/Reports/CURRENT)
 
@@ -85,6 +86,7 @@ TODO:
 - [Yesterdays_Bids_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Yesterdays_Bids_Reports/)
 - [Yesterdays_MNSPBids_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Yesterdays_MNSPBids_Reports/)
 """
+#pylint: enable=line-too-long
 
 from io import BytesIO
 import datetime
@@ -151,9 +153,9 @@ class CurrentFileHandler:
                                               db_name=db_name)
         end_date = datetime.datetime.strptime(end_date, '%Y%m%d')
         page = requests.get("{0}/{1}/{2}/".format(self.base_url,
-                                                  self.section,
+                                                  self.path,
                                                   dataset.dataset_name))
-        regex = re.compile("/{0}/{1}/{2}".format(self.section,
+        regex = re.compile("/{0}/{1}/{2}".format(self.path,
                                                  dataset.dataset_name,
                                                  dataset.nemfile_pattern))
 

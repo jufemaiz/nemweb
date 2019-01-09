@@ -2,26 +2,24 @@ import datetime
 
 from collections import namedtuple
 
-import pandas as pd
-
 from nemweb.extractor import archive
 from nemweb.extractor import current
 from nemweb import timezone as tz
 
 CURRENTDATASETCOVERAGE = datetime.timedelta(days=2, minutes=5)
-CURRENTDATASET = current.Dataset(title="Dispatch SCADA",
-                                 path="Dispatch_SCADA",
-                                 filepattern='PUBLIC_DISPATCHSCADA_(\d{12})_\d{16}.zip',
-                                 datetimeformat="%Y%m%d%H%M",
-                                 datetimekey="SETTLEMENTDATE",
+CURRENTDATASET = current.Dataset(title='Dispatch SCADA',
+                                 path='Dispatch_SCADA',
+                                 filepattern=r'PUBLIC_DISPATCHSCADA_(\d{12})_\d{16}.zip',
+                                 datetimeformat='%Y%m%d%H%M',
+                                 datetimekey='SETTLEMENTDATE',
                                  stepsize=300)
 CURRENTDATA = current.CurrentData(CURRENTDATASET)
 
-ARCHIVEDATASET = archive.Dataset(title="Dispatch SCADA",
-                                 path="Dispatch_SCADA",
-                                 filepattern='PUBLIC_DISPATCHSCADA_(\d{8}).zip',
-                                 datetimeformat="%Y%m%d",
-                                 datetimekey="SETTLEMENTDATE",
+ARCHIVEDATASET = archive.Dataset(title='Dispatch SCADA',
+                                 path='Dispatch_SCADA',
+                                 filepattern=r'PUBLIC_DISPATCHSCADA_(\d{8}).zip',
+                                 datetimeformat='%Y%m%d',
+                                 datetimekey='SETTLEMENTDATE',
                                  stepsize=300)
 ARCHIVEDATA = archive.ArchiveData(ARCHIVEDATASET)
 
@@ -30,35 +28,37 @@ SETTLEMENTDATEFORMAT = '%Y/%m/%d %H:%M:%S'
 Datum = namedtuple('DispatchSCADADatum',
                    ['risingedge', 'fallingedge', 'duid', 'value'])
 
-def dataset(start, finish):
+def dataset(start, finish, currentds=True):
     """This is customised for each.
+
+    TODO: determine expected available data on nemweb for CURRENT and ARCHIVE
+          and extract to deal with entire range of time
 
     Args:
         start (:obj:`datetime`): the start of the dataset requested
         finish (:obj:`datetime`): the finish of the dataset requested
+        currentds (boolean): current data if true, archive data if false
 
     Returns:
         dict of pandas
     """
-    dataset = {}
+    result = {}
 
     datasets = []
 
-    now = datetime.datetime.utcnow().astimezone(tz.AEMOTZ)
-
-    if True:
+    if currentds:
         datasets.append(CURRENTDATA.dataset(start, finish))
-    if False:
+    else:
         datasets.append(ARCHIVEDATA.dataset(start, finish))
 
-    for d in datasets:
-        for k in d.keys():
-            if k in dataset:
-                dataset[k] = dataset[k].append(d[k])
+    for datas in datasets:
+        for key in datas.keys():
+            if key in result:
+                result[key] = result[key].append(datas[key])
             else:
-                dataset[k] = d[k]
+                result[key] = datas[key]
 
-    return dataset
+    return result
 
 def standarize(datum):
     """Standardizes to a more normal dataset.
@@ -69,10 +69,10 @@ def standarize(datum):
     Returns:
         nemweb.data.dispatch_scada.Datum namedtuple
     """
-    t = datetime.datetime.strptime(datum.SETTLEMENTDATE,
-                                   SETTLEMENTDATEFORMAT).replace(tzinfo=tz.AEMOTZ)
-    return Datum(fallingedge=t,
-                 risingedge=(t - datetime.timedelta(minutes=5)),
+    time = datetime.datetime.strptime(datum.SETTLEMENTDATE,
+                                      SETTLEMENTDATEFORMAT).replace(tzinfo=tz.AEMOTZ)
+    return Datum(fallingedge=time,
+                 risingedge=(time - datetime.timedelta(minutes=5)),
                  duid=datum.DUID,
                  value=float(datum.SCADAVALUE))
 
@@ -85,7 +85,9 @@ def nemserializer(datum, lineend=True):
     Returns:
         str CSV form of a row, including line ending
     """
-    return "D,DISPATCH,UNIT_SCADA,1,{0},{1},{2}{3}".format(datum.fallingedge.strftime(SETTLEMENTDATEFORMAT),
-                                                           datum.duid,
-                                                           datum.value,
-                                                           ("\n" if lineend else ''))
+    return 'D,DISPATCH,UNIT_SCADA,1,{0},{1},{2}{3}'.format(
+        datum.fallingedge.strftime(SETTLEMENTDATEFORMAT),
+        datum.duid,
+        datum.value,
+        ('\n' if lineend else '')
+    )

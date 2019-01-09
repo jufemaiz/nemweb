@@ -9,18 +9,18 @@ Supported options are currently:
 - sqlite
 """
 
-import collections
-import json
+# import collections
+# import json
 
-from io import BytesIO
-from collections import namedtuple
-import datetime
+# from io import BytesIO
+# from collections import namedtuple
+# import datetime
 
-def persist(type, rows):
+def persist(type_of, rows):
     """Upserts the rows of data to a persistence layer.
 
     Args:
-        type (str): the type of data to persist
+        type_of (str): the type of data to persist
         rows (array of dicts): the row
 
     Returns:
@@ -29,4 +29,5 @@ def persist(type, rows):
     Raises:
         Exception if cannot persist
     """
+    print(type_of, 'has', len(rows), 'rows')
     return True

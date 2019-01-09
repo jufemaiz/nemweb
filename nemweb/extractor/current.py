@@ -17,17 +17,16 @@ is processed.
 CurrentData gets the CURRENT datasets as they are divergent from the ARCHIVE in
 files stored and naming structures.
 """
+
 import datetime
-import re
+from collections import namedtuple
+from io import BytesIO
 import requests
 
-from collections import namedtuple
-from dateutil import parser
-from io import BytesIO
-
-from nemweb.extractor import data
 from nemweb import nemfile_reader
 from nemweb import timezone as tz
+from nemweb.extractor import data
+
 
 Dataset = namedtuple('NemwebCurrent',
                      ['title', 'path', 'filepattern', 'datetimeformat',
@@ -37,7 +36,7 @@ DATASETS = {
     "dispatch_scada": Dataset(
         title="Dispatch SCADA",
         path="Dispatch_SCADA",
-        filepattern='PUBLIC_DISPATCHSCADA_(\d{12})_\d{16}.zip',
+        filepattern=r'PUBLIC_DISPATCHSCADA_(\d{12})_\d{16}.zip',
         datetimeformat="%Y%m%d%H%M",
         datetimekey="SETTLEMENTDATE",
         stepsize=300),
@@ -45,7 +44,7 @@ DATASETS = {
     "trading_is": Dataset(
         title="Trading Internodal Settlement Reports",
         path="TradingIS_Reports",
-        filepattern="PUBLIC_TRADINGIS_(\d{12})_\d{16}.zip",
+        filepattern=r'PUBLIC_TRADINGIS_(\d{12})_\d{16}.zip',
         datetimeformat="%Y%m%d%H%M",
         datetimekey="SETTLEMENTDATE",
         stepsize=300),
@@ -53,7 +52,7 @@ DATASETS = {
     "rooftopPV_actual": Dataset(
         title="Rooftop Photovoltaics Actual",
         path="ROOFTOP_PV/ACTUAL",
-        filepattern="PUBLIC_ROOFTOP_PV_ACTUAL_(\d{14})_\d{16}.zip",
+        filepattern=r'PUBLIC_ROOFTOP_PV_ACTUAL_(\d{14})_\d{16}.zip',
         datetimeformat="%Y%m%d%H%M00",
         datetimekey="INTERVAL_DATETIME",
         stepsize=300),
@@ -61,7 +60,7 @@ DATASETS = {
     "next_day_actual_gen": Dataset(
         title="Next Day Actual Generation",
         path="Next_Day_Actual_Gen",
-        filepattern="PUBLIC_NEXT_DAY_ACTUAL_GEN_(\d{8})_\d{16}.zip",
+        filepattern=r'PUBLIC_NEXT_DAY_ACTUAL_GEN_(\d{8})_\d{16}.zip',
         datetimeformat="%Y%m%d",
         datetimekey="INTERVAL_DATETIME",
         stepsize=300),
@@ -69,7 +68,7 @@ DATASETS = {
     "dispatch_is": Dataset(
         title="Dispatch Internodal Settlement Reports",
         path="DispatchIS_Reports",
-        filepattern="PUBLIC_DISPATCHIS_(\d{12})_\d{16}.zip",
+        filepattern=r'PUBLIC_DISPATCHIS_(\d{12})_\d{16}.zip',
         datetimeformat="%Y%m%d%H%M",
         datetimekey="SETTLEMENTDATE",
         stepsize=300),
@@ -77,7 +76,7 @@ DATASETS = {
     "next_day_dispatch": Dataset(
         title="Next Day Dispatch",
         path="Next_Day_Dispatch",
-        filepattern="PUBLIC_NEXT_DAY_DISPATCH_(\d{8})_\d{16}.zip",
+        filepattern=r'PUBLIC_NEXT_DAY_DISPATCH_(\d{8})_\d{16}.zip',
         datetimeformat="%Y%m%d",
         datetimekey="SETTLEMENTDATE",
         stepsize=300)
@@ -104,12 +103,8 @@ class CurrentData(data.Data):
         Args:
             dataset (:obj:`Dataset`):
         """
-        self.title = dataset.title
-        self.path = dataset.path
-        self.filepattern = dataset.filepattern
-        self.datetimeformat = dataset.datetimeformat
-        self.datetimekey = dataset.datetimekey
         self.stepsize = dataset.stepsize
+        super(CurrentData, self).__init__(dataset)
 
     def dataset(self, start=None, finish=None):
         """Request a dataset for a range of datetimes. This is now timezone
@@ -126,34 +121,30 @@ class CurrentData(data.Data):
         Returns:
             array dict of panda
         """
-        now = datetime.datetime.utcnow().astimezone(tz.AEMOTZ)
-
-        if start == None:
-            start = datetime.datetime(now.year,
-                                      now.month,
-                                      now.day,
-                                      tzinfo=tz.AEMOTZ)
-
-        if finish == None : finish = start + datetime.timedelta(days=1)
+        start, finish = self.set_start_finish(start, finish)
 
         dataset = {}
 
         for link in self._links():
-            filedatetime = datetime.datetime.strptime(link['datetime'],
-                                                      self.datetimeformat).replace(tzinfo=tz.AEMOTZ)
+            filedatetime_s = datetime.datetime.strptime(
+                link['datetime'],
+                self.datetimeformat
+            ).replace(tzinfo=tz.AEMOTZ)
+
+            filedatetime_f = filedatetime_s + datetime.timedelta(seconds=self.stepsize)
 
             # TODO: fix this better! Need to know the step size of the data
-            if finish < filedatetime or start > filedatetime + datetime.timedelta(seconds=self.stepsize):
-                print(filedatetime)
+            if finish < filedatetime_s or start > filedatetime_f:
+                print(filedatetime_s)
                 continue
 
             nemfile = self.download(link['path'])
 
-            for k in nemfile.keys():
-                if k in dataset:
-                    dataset[k] = dataset[k].append(nemfile[k])
+            for key in nemfile.keys():
+                if key in dataset:
+                    dataset[key] = dataset[key].append(nemfile[key])
                 else:
-                    dataset[k] = nemfile[k]
+                    dataset[key] = nemfile[key]
 
         return dataset
 
@@ -175,24 +166,3 @@ class CurrentData(data.Data):
         zipfilestream = BytesIO(response.content)
         nemfile = nemfile_reader.nemzip_reader(zipfilestream)
         return nemfile
-
-    def _links(self):
-        """Private method to yield each link discovered.
-
-        TODO: perhaps consider using lxml to look for the HREF property of A
-        elements instead of regular expressions. This is probably a little more
-        sound as it will be able to deal with changes to the file structures
-        etc.
-
-        Yields:
-            dict: dict containing a path and a datetime that has been
-            uncovered.
-        """
-        page = requests.get("{0}/{1}/{2}/".format(self.__class__.baseurl,
-                                                  self.__class__.basepath,
-                                                  self.path))
-        regex = re.compile("/{0}/{1}/{2}".format(self.__class__.basepath,
-                                                 self.path,
-                                                 self.filepattern))
-        for link in regex.finditer(page.text):
-            yield {'path':link.group(0),'datetime':link.group(1)}
