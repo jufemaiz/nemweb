@@ -10,13 +10,13 @@ logging.getLogger().addHandler(logging.NullHandler())
 class TestDispatchScada(unittest.TestCase):
 
     def test_dataset(self):
-        self.assertEquals(True, True)
+        self.assertEqual(True, True)
 
     def test_standarize(self):
-        self.assertEquals(True, True)
+        self.assertEqual(True, True)
 
     def test_nemserializer(self):
-        self.assertEquals(True, True)
+        self.assertEqual(True, True)
 
 if __name__ == '__main__':
     unittest.main()
