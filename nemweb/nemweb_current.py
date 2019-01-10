@@ -104,13 +104,13 @@ class CurrentFileHandler:
     - nemweb_name: the name of the dataset to be download (e.g. Dispatch_SCADA)
     - filename_pattern: a regex expression to match and a determine datetime from filename
       on nemweb. As example, for files in the Dispatch_SCADA dataset
-      (e.g "PUBLIC_DISPATCHSCADA_201806201135_0000000296175732.zip") the regex
+      (e.g 'PUBLIC_DISPATCHSCADA_201806201135_0000000296175732.zip') the regex
       file_patten is PUBLIC_DISPATCHSCADA_([0-9]{12})_[0-9]{16}.zip
     - the format of the string to strip the datetime from. From the above example, the
-      match returns '201806201135', so the string is "%Y%m%d%H%M",
+      match returns '201806201135', so the string is '%Y%m%d%H%M',
     - the list of tables to insert from each dataset. This is derived from the 2nd and
       3rd column in the nemweb dataset. For example, the 2nd column is in Dispatch_SCADA
-      is "DISPATCH" and the 3rd is "SCADA_VALUE" and the name is "DISPATCH_UNIT_SCADA".
+      is 'DISPATCH' and the 3rd is 'SCADA_VALUE' and the name is 'DISPATCH_UNIT_SCADA'.
 
     Several datasets contain multiple tables. Examples can be found in the DATASETS dict
     (nemfile_reader.DATASETS)
@@ -121,8 +121,8 @@ class CurrentFileHandler:
     """
 
     def __init__(self):
-        self.base_url = "https://www.nemweb.com.au"
-        self.path = "REPORTS/CURRENT"
+        self.base_url = 'https://www.nemweb.com.au'
+        self.path = 'REPORTS/CURRENT'
 
     def update_data(
             self,
@@ -152,22 +152,80 @@ class CurrentFileHandler:
                                               start_date=start_date,
                                               db_name=db_name)
         end_date = datetime.datetime.strptime(end_date, '%Y%m%d')
-        page = requests.get("{0}/{1}/{2}/".format(self.base_url,
+
+        for nemfile, table in self.dataset_tables(dataset, print_progress=print_progress, start_date=start_date, end_date=end_date):
+            dataframe = nemfile[table].drop_duplicates().copy()
+            nemweb_sqlite.insert(dataframe, table, db_name)
+
+    def dataset_tables(self, dataset, print_progress=False, start_date=None, end_date=None):
+        """Yields the dataset tables
+
+        Args:
+            dataset (:obj:`CurrentDataset`): the CurrentDataset to use
+            print_progress (bool, optional): debug mode printing process of the
+                update_data calls. Defaults to False.
+            start_date (:obj:`datetime`, optional): the start date
+            end_date (:obj:`datetime`, optional): the end date
+
+        Yields:
+            nemfile (:obj:``): the nemfile
+            table (:obj:``): the table
+        """
+        for match, file_datetime in self.valid_dataset_links(dataset, start_date=start_date, end_date=end_date):
+            nemfile = self.download(match.group(0))
+            if print_progress:
+                print(dataset.dataset_name, file_datetime)
+            for table in dataset.tables:
+                yield nemfile, table
+
+    def get_page(self, dataset):
+        """Uses `requests` to get a page in full for analysis.
+
+        Args:
+            dataset (:obj:`CurrentDataset`): the CurrentDataset to use
+
+        Returns:
+            :obj:`requests.Response`
+        """
+        return requests.get('{0}/{1}/{2}/'.format(self.base_url,
                                                   self.path,
                                                   dataset.dataset_name))
-        regex = re.compile("/{0}/{1}/{2}".format(self.path,
+
+    def dataset_links(self, dataset):
+        """
+        Args:
+            dataset (:obj:`CurrentDataset`): the CurrentDataset to use
+
+        Yields:
+            match (:obj:`re.Match`): the full match object
+            file_datetime (:obj:`datetime`): the file's datetime from its filename
+        """
+        page = self.get_page(dataset)
+
+        regex = re.compile('/{0}/{1}/{2}'.format(self.path,
                                                  dataset.dataset_name,
                                                  dataset.nemfile_pattern))
-
         for match in regex.finditer(page.text):
             file_datetime = datetime.datetime.strptime(match.group(1), dataset.datetime_format)
-            if end_date > file_datetime > start_date:
-                nemfile = self.download(match.group(0))
-                if print_progress:
-                    print(dataset.dataset_name, file_datetime)
-                for table in dataset.tables:
-                    dataframe = nemfile[table].drop_duplicates().copy()
-                    nemweb_sqlite.insert(dataframe, table, db_name)
+            yield match, file_datetime
+
+    def valid_dataset_links(
+        self,
+        dataset,
+        start_date=None,
+        end_date=None,  #  must be a better way
+    ):
+        """
+        Args:
+            dataset (:obj:`CurrentDataset`): the CurrentDataset to use
+
+        Yields:
+            match (:obj:`re.Match`): the full match object
+            file_datetime (:obj:`datetime`): the file's datetime from its filename
+        """
+        for match, file_datetime in self.dataset_links(dataset):
+            if self.valid_datetime(file_datetime, start_date, end_date):
+                yield match, file_datetime
 
     def download(self, link):
         """Dowloads nemweb zipfile from link into memory as a byteIO object.
@@ -179,65 +237,79 @@ class CurrentFileHandler:
         Returns:
             dict
         """
-        response = requests.get("{0}{1}".format(self.base_url, link))
+        response = requests.get('{0}{1}'.format(self.base_url, link))
         zip_bytes = BytesIO(response.content)
         nemfile = nemfile_reader.nemzip_reader(zip_bytes)
         return nemfile
 
+    @staticmethod
+    def valid_datetime(datetime, start, finish):
+        """Ensures the `datetime` lies within `start` and `finish`. Start is
+        inclusive in the test, finish is exclusive.
+
+        Args:
+            datetime (:obj:`datetime`): the datetime to check.
+            start (:obj:`datetime`): start of the acceptable datetime range
+            finish (:obj:`datetime`): finish of the acceptable datetime range
+
+        Returns:
+            bool
+        """
+        return start <= datetime < finish
 
 # Class factory function for containing data for 'CURRENT' datasets
-CurrentDataset = namedtuple("NemwebCurrentFile",
-                            ["dataset_name",
-                             "nemfile_pattern",
-                             "datetime_format",
-                             "datetime_column",
-                             "tables"])
+CurrentDataset = namedtuple('NemwebCurrentFile',
+                            ['dataset_name',
+                             'nemfile_pattern',
+                             'datetime_format',
+                             'datetime_column',
+                             'tables'])
 
 DATASETS = {
-    "dispatch_scada":CurrentDataset(
-        dataset_name="Dispatch_SCADA",
-        nemfile_pattern='PUBLIC_DISPATCHSCADA_([0-9]{12})_[0-9]{16}.zip',
-        datetime_format="%Y%m%d%H%M",
-        datetime_column="SETTLEMENTDATE",
-        tables=["DISPATCH_UNIT_SCADA"]),
+    'dispatch_scada':CurrentDataset(
+        dataset_name='Dispatch_SCADA',
+        nemfile_pattern=r'PUBLIC_DISPATCHSCADA_([0-9]{12})_[0-9]{16}.zip',
+        datetime_format='%Y%m%d%H%M',
+        datetime_column='SETTLEMENTDATE',
+        tables=['DISPATCH_UNIT_SCADA']),
 
-    "trading_is": CurrentDataset(
-        dataset_name="TradingIS_Reports",
-        nemfile_pattern="PUBLIC_TRADINGIS_([0-9]{12})_[0-9]{16}.zip",
-        datetime_format="%Y%m%d%H%M",
-        datetime_column="SETTLEMENTDATE",
+    'trading_is': CurrentDataset(
+        dataset_name='TradingIS_Reports',
+        nemfile_pattern=r'PUBLIC_TRADINGIS_([0-9]{12})_[0-9]{16}.zip',
+        datetime_format='%Y%m%d%H%M',
+        datetime_column='SETTLEMENTDATE',
         tables=['TRADING_PRICE',
                 'TRADING_REGIONSUM',
                 'TRADING_INTERCONNECTORRES']),
 
-    "rooftopPV_actual": CurrentDataset(
-        dataset_name="ROOFTOP_PV/ACTUAL",
-        nemfile_pattern="PUBLIC_ROOFTOP_PV_ACTUAL_([0-9]{14})_[0-9]{16}.zip",
-        datetime_format="%Y%m%d%H%M00",
-        datetime_column="INTERVAL_DATETIME",
+    'rooftopPV_actual': CurrentDataset(
+        dataset_name='ROOFTOP_PV/ACTUAL',
+        nemfile_pattern=r'PUBLIC_ROOFTOP_PV_ACTUAL_([0-9]{14})_[0-9]{16}.zip',
+        datetime_format='%Y%m%d%H%M00',
+        datetime_column='INTERVAL_DATETIME',
         tables=['ROOFTOP_ACTUAL']),
 
-    "next_day_actual_gen": CurrentDataset(
-        dataset_name="Next_Day_Actual_Gen",
-        nemfile_pattern="PUBLIC_NEXT_DAY_ACTUAL_GEN_([0-9]{8})_[0-9]{16}.zip",
-        datetime_format="%Y%m%d",
-        datetime_column="INTERVAL_DATETIME",
+    'next_day_actual_gen': CurrentDataset(
+        dataset_name='Next_Day_Actual_Gen',
+        nemfile_pattern=r'PUBLIC_NEXT_DAY_ACTUAL_GEN_([0-9]{8})_[0-9]{16}.zip',
+        datetime_format='%Y%m%d',
+        datetime_column='INTERVAL_DATETIME',
         tables=['METER_DATA_GEN_DUID']),
 
-    "dispatch_is": CurrentDataset(
-        dataset_name="DispatchIS_Reports",
-        nemfile_pattern="PUBLIC_DISPATCHIS_([0-9]{12})_[0-9]{16}.zip",
-        datetime_format="%Y%m%d%H%M",
-        datetime_column="SETTLEMENTDATE",
+    'dispatch_is': CurrentDataset(
+        dataset_name='DispatchIS_Reports',
+        nemfile_pattern=r'PUBLIC_DISPATCHIS_([0-9]{12})_[0-9]{16}.zip',
+        datetime_format='%Y%m%d%H%M',
+        datetime_column='SETTLEMENTDATE',
         tables=['DISPATCH_PRICE',
                 'DISPATCH_REGIONSUM',
                 'DISPATCH_INTERCONNECTORRES']),
 
-    "next_day_dispatch": CurrentDataset(
-        dataset_name="Next_Day_Dispatch",
-        nemfile_pattern="PUBLIC_NEXT_DAY_DISPATCH_([0-9]{8})_[0-9]{16}.zip",
-        datetime_format="%Y%m%d",
-        datetime_column="SETTLEMENTDATE",
+    'next_day_dispatch': CurrentDataset(
+        dataset_name='Next_Day_Dispatch',
+        nemfile_pattern=r'PUBLIC_NEXT_DAY_DISPATCH_([0-9]{8})_[0-9]{16}.zip',
+        datetime_format='%Y%m%d',
+        datetime_column='SETTLEMENTDATE',
         tables=['DISPATCH_UNIT_SOLUTION'])
 }
 
@@ -246,7 +318,7 @@ def update_datasets(datasets, print_progress=False):
     """Updates a subset of datasets (as a list) contained in DATASETS
 
     Args:
-        datasets (list): list of datasets to update
+        datasets (list): list of strings identifying datasets to update
         print_progress (bool, optional): whether or not to print the log
             progress. Defaults to False
 
