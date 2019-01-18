@@ -45,9 +45,13 @@ setup(name='nemweb',
       packages=['nemweb'],
       zip_safe=False,
       install_requires=[
+          'lxml',
           'pandas',
-          'requests'],
+          'pip',
+          'requests',
+          'setuptools'],
       cmdclass={'install': PostInstallCommand,
                 'develop': PostDevelopCommand},
-      package_data={'nemweb': 'tests/2018_09_21.pkl'}
-      )
+      package_data={'nemweb': [
+        'tests/2018_09_21.pkl']
+      })

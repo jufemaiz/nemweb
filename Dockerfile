@@ -1,4 +1,5 @@
-FROM python:3
+FROM python:3.13
+
 LABEL maintainer="Joel Courtney <joel@aceteknologi.com>"
 
 RUN apt-get -y update && \
@@ -10,6 +11,7 @@ RUN apt-get -y update && \
 COPY . /app/
 
 ENV NEMWEB_LOG_CONF=/app/config/logging.json
+ENV LANG=en_AU.UTF-8
 
 WORKDIR /app
 

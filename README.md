@@ -250,3 +250,22 @@ In no particular order:
 - [Weekly_Bulletin](https://www.nemweb.com.au/REPORTS/CURRENT/Weekly_Bulletin/)
 - [Yesterdays_Bids_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Yesterdays_Bids_Reports/)
 - [Yesterdays_MNSPBids_Reports](https://www.nemweb.com.au/REPORTS/CURRENT/Yesterdays_MNSPBids_Reports/)
+
+## Docker
+
+You can work with this in Dockerised form.
+
+### Build
+
+```bash
+docker build -t opennem:nemweb .
+```
+
+### Run
+
+For a shell:
+
+```bash
+docker run --rm -it opennem:nemweb
+```
+

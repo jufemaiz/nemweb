@@ -33,52 +33,52 @@ Dataset = namedtuple('NemwebCurrent',
                       'datetimekey', 'stepsize'])
 
 DATASETS = {
-    "dispatch_scada": Dataset(
-        title="Dispatch SCADA",
-        path="Dispatch_SCADA",
+    'dispatch_scada': Dataset(
+        title='Dispatch SCADA',
+        path='Dispatch_SCADA',
         filepattern=r'PUBLIC_DISPATCHSCADA_(\d{12})_\d{16}.zip',
-        datetimeformat="%Y%m%d%H%M",
-        datetimekey="SETTLEMENTDATE",
+        datetimeformat='%Y%m%d%H%M',
+        datetimekey='SETTLEMENTDATE',
         stepsize=300),
 
-    "trading_is": Dataset(
-        title="Trading Internodal Settlement Reports",
-        path="TradingIS_Reports",
+    'trading_is': Dataset(
+        title='Trading Internodal Settlement Reports',
+        path='TradingIS_Reports',
         filepattern=r'PUBLIC_TRADINGIS_(\d{12})_\d{16}.zip',
-        datetimeformat="%Y%m%d%H%M",
-        datetimekey="SETTLEMENTDATE",
+        datetimeformat='%Y%m%d%H%M',
+        datetimekey='SETTLEMENTDATE',
         stepsize=300),
 
-    "rooftopPV_actual": Dataset(
-        title="Rooftop Photovoltaics Actual",
-        path="ROOFTOP_PV/ACTUAL",
+    'rooftopPV_actual': Dataset(
+        title='Rooftop Photovoltaics Actual',
+        path='ROOFTOP_PV/ACTUAL',
         filepattern=r'PUBLIC_ROOFTOP_PV_ACTUAL_(\d{14})_\d{16}.zip',
-        datetimeformat="%Y%m%d%H%M00",
-        datetimekey="INTERVAL_DATETIME",
+        datetimeformat='%Y%m%d%H%M00',
+        datetimekey='INTERVAL_DATETIME',
         stepsize=300),
 
-    "next_day_actual_gen": Dataset(
-        title="Next Day Actual Generation",
-        path="Next_Day_Actual_Gen",
+    'next_day_actual_gen': Dataset(
+        title='Next Day Actual Generation',
+        path='Next_Day_Actual_Gen',
         filepattern=r'PUBLIC_NEXT_DAY_ACTUAL_GEN_(\d{8})_\d{16}.zip',
-        datetimeformat="%Y%m%d",
-        datetimekey="INTERVAL_DATETIME",
+        datetimeformat='%Y%m%d',
+        datetimekey='INTERVAL_DATETIME',
         stepsize=300),
 
-    "dispatch_is": Dataset(
-        title="Dispatch Internodal Settlement Reports",
-        path="DispatchIS_Reports",
+    'dispatch_is': Dataset(
+        title='Dispatch Internodal Settlement Reports',
+        path='DispatchIS_Reports',
         filepattern=r'PUBLIC_DISPATCHIS_(\d{12})_\d{16}.zip',
-        datetimeformat="%Y%m%d%H%M",
-        datetimekey="SETTLEMENTDATE",
+        datetimeformat='%Y%m%d%H%M',
+        datetimekey='SETTLEMENTDATE',
         stepsize=300),
 
-    "next_day_dispatch": Dataset(
-        title="Next Day Dispatch",
-        path="Next_Day_Dispatch",
+    'next_day_dispatch': Dataset(
+        title='Next Day Dispatch',
+        path='Next_Day_Dispatch',
         filepattern=r'PUBLIC_NEXT_DAY_DISPATCH_(\d{8})_\d{16}.zip',
-        datetimeformat="%Y%m%d",
-        datetimekey="SETTLEMENTDATE",
+        datetimeformat='%Y%m%d',
+        datetimekey='SETTLEMENTDATE',
         stepsize=300)
 }
 
@@ -147,22 +147,3 @@ class CurrentData(data.Data):
                     dataset[key] = nemfile[key]
 
         return dataset
-
-    def download(self, path):
-        """Downloads nemweb zipfile from link into memory as a BytesIO object.
-        nemfile object is returned from the byteIO object.
-
-        TODO: review if this is better handled by a temporary file as the
-        location. Likely required for supporting zip of zips (as in ARCHIVE).
-        https://docs.python.org/2/library/tempfile.html
-
-        Args:
-            path (str): the path to request
-
-        Returns:
-            :obj:`nemfile`
-        """
-        response = requests.get(self._urlfor(path))
-        zipfilestream = BytesIO(response.content)
-        nemfile = nemfile_reader.nemzip_reader(zipfilestream)
-        return nemfile
