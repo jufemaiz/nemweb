@@ -122,18 +122,3 @@ class ArchiveData(data.Data):
             datasets.append(nemfile)
 
         return datasets
-
-    def download(self, path):
-        """Downloads nemweb zipfile from link into memory as a BytesIO object.
-        nemfile object is returned from the byteIO object
-
-        Args:
-            path (str): the path to request
-
-        Returns:
-            :obj:`nemfile`
-        """
-        response = requests.get(self._urlfor(path))
-        zip_bytes = BytesIO(response.content)
-        nemfile = nemfile_reader.nemzip_reader(zip_bytes)
-        return nemfile
